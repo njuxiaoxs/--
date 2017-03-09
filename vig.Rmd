@@ -11,12 +11,12 @@ vignette: >
 
 我的工作包含以下几个方面：
 
-- 组合优化
-- IC计算
-- 行业/市值中性
-- Risk Model
+- [组合优化](#ref1)
+- [IC计算](#ref2)
+- [行业/市值中性](#ref3)
+- [Risk Model](#ref4)
 
-## 组合优化
+## 组合优化{#ref1}
 
 组合优化的参考文献在 `192.168.1.100\public\cwnag\opt` 中，code是 `/opt/GFTCacheServer/RScripts/Portfolioop.R`。
 主要用到的 package 是 `PortfolioAnalytics`， 对于求解最优解的算法，主要是 `glpk`，`quadprod`和 `DEoptim`。 
@@ -49,7 +49,7 @@ knitr::include_graphics("pic/opt-1.png")
 上述参数配置好之后点击执行优化，过一会会出现优化结果。
 
 
-## IC计算
+## IC计算{#ref2}
 
 参考文献为 [华泰单因子测试之估值类因子](doc/华泰单因子测试之估值类因子.pdf)。
 因子的 IC 值是指因子在第 T 期的暴露度与 T+1 期的股票收益的相关系数，即
@@ -57,7 +57,7 @@ knitr::include_graphics("pic/opt-1.png")
 
 <center>$IC^{T}_d = corr(R^{T+n},d^{T})$</center>
 
-其中，$IC^{T}_d$代表因子$d$在第$T$期的$IC$值， $R^{T+n}$代表所有个股在第$T+1$期的收益率，$d^{T}$代表所有个股第$T$期在因子$d$上的暴露。注意，我们目前用的因子和收益率都做了`rank`处理。目前$n$的取值为1-12，每期的时间长度也可以通过`winSize`调整。
+其中，$IC^{T}_d$代表因子$d$在第$T$期的$IC$值， $R^{T+n}$代表所有个股在第$T+1$期的收益率，$d^{T}$代表所有个股第$T$期在因子$d$上的暴露。注意，我们目前用的因子和收益率都做了`rank`处理。目前$n$的取值为1-12，每期的时间长度也可以通过`winSize`调整，可以用来检测因子的稳定性。
 
 评价因子的方法包括：
 
@@ -69,49 +69,31 @@ knitr::include_graphics("pic/opt-1.png")
 
 在计算IC的FR中，同样包括了单因子`factor return`的计算，通过`linear regression`对于因子和收益进行截面回归，剔除了行业的影响，得到因子收益的序列。
 
-## 行业/市值中性
+## 行业/市值中性{#ref3}
 
 参考文献为 [华泰单因子测试之估值类因子](doc/华泰单因子测试之估值类因子.pdf)。 原理同研报中的`单因子分层法`， 行业中性是在每个一级行业内部对所有个股按因子大小进行排序，每个行业内均分成 N 个分层组合。如下图所示，黄色方块代表各行业内个股初始权重，采用等权的方式。每个行业的权重按照基准中行业权重配置。
 市值中性原理相同。
 
 <br><br>
 <center>
-
 ```{r, echo = FALSE, out.width = "500px"}
-
 knitr::include_graphics("pic/neutral.png")
-
 ```
-
 </center>
 <br><br>
 
-## Figures
+## Risk Model{#ref4}
 
-The figure sizes have been customised so that you can easily put two images side-by-side. 
+Risk Model 的参考文献为 [ClariFI Online Help](http://q.gftchina.com:12860/ClariFI_Online_Help)， 在GS上的实现过程参考下图：
 
-```{r, fig.show='hold'}
-plot(1:10)
-plot(10:1)
+<br><br>
+<center>
+```{r, echo = FALSE, out.width = "500px"}
+knitr::include_graphics("pic/riskmodel.png")
 ```
+</center>
+<br><br>
 
-You can enable figure captions by `fig_caption: yes` in YAML:
+首先将行业因子加入Stringmap，然后再将风格因子加入Stringmap，通过MFM计算出每个因子的因子收益和标的的特殊风险，然后计算出因子收益之间的协方差矩阵。具体的指令在`106`上的`/RScript/RiskModel/calcFactorReturn_SpecificRisk.R`和`/RScript/RiskModel/calcRiskCovNew.R`，参考GS上搭成的节点`A9EF8B3B76E44099E43BBCC089A9F7EA`
 
-    output:
-      rmarkdown::html_vignette:
-        fig_caption: yes
-
-Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
-
-## More Examples
-
-You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
-
-```{r, echo=FALSE, results='asis'}
-knitr::kable(head(mtcars, 10))
-```
-
-Also a quote using `>`:
-
-> "He who gives up [code] safety for [code] speed deserves neither."
-([via](https://twitter.com/hadleywickham/status/504368538874703872))
+有了Risk Model之后，可以用来计算策略的风险报告，具体算法参考[ClariFI](http://q.gftchina.com:12860/Portfolio_attribution_process)的计算公式， 相应的指令为`/RScript/RiskModel/calcRiskAttribution.R`
